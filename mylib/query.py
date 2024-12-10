@@ -1,47 +1,61 @@
-import os
-from databricks import sql
-from dotenv import load_dotenv
+import pandas as pd
 
-# Global variable for the log file
-LOG_FILE = "query_log.md"
+def load_data(file_path):
+    """
+    Load the data from the given CSV file into a pandas DataFrame.
 
-def log_query(query, result="none"):
-    """Adds to a query markdown file."""
-    with open(LOG_FILE, "a") as file:
-        file.write(f"```sql\n{query}\n```\n\n")
-        if result != "none":
-            if isinstance(result, str):  # In case result is an error message
-                file.write(f"```response from databricks\n{result}\n```\n\n")
-            else:
-                result_str = "\n".join(
-                    [", ".join(map(str, row)) for row in result]
-                )
-                file.write(f"```response from databricks\n{result_str}\n```\n\n")
-        else:
-            file.write(f"```response from databricks\n{result}\n```\n\n")
+    Args:
+        file_path (str): Path to the CSV file.
 
-def general_query(query):
-    """Runs a user-defined query and logs the result."""
-    
-    load_dotenv()
-    server_hostname = os.getenv("server_host")
-    access_token = os.getenv("databricks_api_key")
-    http_path = os.getenv("sql_path")
-
-    result = "none"
-    
+    Returns:
+        pd.DataFrame: Loaded data as a DataFrame.
+    """
     try:
-        with sql.connect(
-            server_hostname=server_hostname,
-            http_path=http_path,
-            access_token=access_token
-        ) as conn:
-            with conn.cursor() as c:
-                c.execute(query)
-                result = c.fetchall()
-                
+        df = pd.read_csv(file_path, encoding="ISO-8859-1")
+        print(f"Data loaded successfully from {file_path}")
+        return df
+    except FileNotFoundError:
+        print(f"Error: File not found at {file_path}")
+        return None
     except Exception as e:
-        result = f"Error: {str(e)}"
-        print(f"Query execution failed: {str(e)}")
-    
-    log_query(query, result)
+        print(f"Error loading data: {e}")
+        return None
+
+def query_data(df, column, value):
+    """
+    Query the DataFrame for rows where the specified column matches the given value.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to query.
+        column (str): The column to filter on.
+        value: The value to filter by.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame.
+    """
+    try:
+        if column not in df.columns:
+            print(f"Error: Column '{column}' not found in DataFrame")
+            return None
+
+        filtered_df = df[df[column] == value]
+        print(f"Query successful: {len(filtered_df)} rows found.")
+        return filtered_df
+    except Exception as e:
+        print(f"Error querying data: {e}")
+        return None
+
+if __name__ == "__main__":
+    # Example usage
+    file_path = "data/avengers.csv"
+
+    # Load the data
+    data = load_data(file_path)
+
+    if data is not None:
+        # Query the data
+        queried_data = query_data(data, column="Gender", value="Male")
+
+        # Display queried data
+        if queried_data is not None:
+            print(queried_data.head())
