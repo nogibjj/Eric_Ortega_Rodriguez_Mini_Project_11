@@ -1,6 +1,6 @@
 [![CI](https://github.com/nogibjj/Eric_Ortega_Rodriguez_Mini_Project_6/actions/workflows/cicd.yml/badge.svg)](https://github.com/nogibjj/Eric_Ortega_Rodriguez_Mini_Project_6/actions/workflows/cicd.yml)
 # Data Pipeline with Databricks
-
+![alt text](image.png)
 ## Overview
 This project demonstrates a data pipeline implemented using Databricks. The pipeline performs the following tasks:
 
