@@ -1,91 +1,78 @@
 import unittest
-from unittest.mock import patch
-from main import main
+import os
+import pandas as pd
+from mylib.extract import extract_data
+from mylib.load import load_data
+from mylib.transform import transform_data
+from mylib.query import query_data
 
-class TestMainFunction(unittest.TestCase):
+class TestMainWorkflow(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """
+        Set up the test environment.
+        """
+        cls.file_path = "test_data/avengers.csv"
+        cls.test_url = "https://raw.githubusercontent.com/nogibjj/Eric_Ortega_Rodriguez_Mini_Project_11/main/data/avengers.csv"
+        cls.test_column = "Hero_Gender"
+        cls.test_value = "Male"
 
-    @patch('main.load_dotenv')  
-    @patch('main.extract')  
-    @patch('main.load')     
-    @patch('main.general_query')  
-    def test_main(self, mock_general_query, mock_load, mock_extract, mock_load_dotenv):
-        main()  # Run the main function
-        mock_load_dotenv.assert_called_once()
-        mock_extract.assert_called_once()
-        mock_load.assert_called_once()
-        mock_general_query.assert_called_once()
+    def test_extract_data(self):
+        """
+        Test the extract_data function to ensure it downloads the file.
+        """
+        result = extract_data(self.file_path, self.test_url)
+        self.assertTrue(os.path.exists(result), "File was not downloaded or located.")
 
-if __name__ == '__main__':
+    def test_load_data(self):
+        """
+        Test the load_data function to ensure the CSV is loaded into a DataFrame.
+        """
+        # Ensure the data file is available
+        extract_data(self.file_path, self.test_url)
+        
+        df = load_data(self.file_path)
+        self.assertIsInstance(df, pd.DataFrame, "Loaded data is not a DataFrame.")
+        self.assertGreater(len(df), 0, "Loaded DataFrame is empty.")
+
+    def test_transform_data(self):
+        """
+        Test the transform_data function to ensure transformations are applied correctly.
+        """
+        # Load the data
+        extract_data(self.file_path, self.test_url)
+        raw_data = load_data(self.file_path)
+
+        transformed_data = transform_data(raw_data)
+        self.assertIn("Hero_Gender", transformed_data.columns, "Column 'Hero_Gender' not found in transformed data.")
+        self.assertIn("Active_Year", transformed_data.columns, "Column 'Active_Year' not found in transformed data.")
+        self.assertIn("Hero_Name", transformed_data.columns, "Column 'Hero_Name' not found in transformed data.")
+        self.assertNotIn("Gender", transformed_data.columns, "Old column 'Gender' still exists in transformed data.")
+
+    def test_query_data(self):
+        """
+        Test the query_data function to ensure it filters data correctly.
+        """
+        # Load and transform the data
+        extract_data(self.file_path, self.test_url)
+        raw_data = load_data(self.file_path)
+        transformed_data = transform_data(raw_data)
+
+        queried_data = query_data(transformed_data, self.test_column, self.test_value)
+        self.assertIsInstance(queried_data, pd.DataFrame, "Query result is not a DataFrame.")
+        self.assertGreaterEqual(len(queried_data), 0, "Query returned no results.")
+        self.assertTrue(all(queried_data[self.test_column] == self.test_value),
+                        f"Query results do not match the value '{self.test_value}' in column '{self.test_column}'.")
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Clean up the test environment.
+        """
+        if os.path.exists(cls.file_path):
+            os.remove(cls.file_path)
+        if os.path.exists("test_data"):
+            os.rmdir("test_data")
+
+if __name__ == "__main__":
     unittest.main()
-
-
-
-# import os
-# import sqlite3
-# from mylib.query import query, create_entry
-
-# def setup_test_db():
-#     """Create a temporary test database with sample data"""
-#     db_name = "test_avengers.db"
-#     conn = sqlite3.connect(db_name)
-#     cursor = conn.cursor()
-
-#     # Avengers table
-#     cursor.execute(
-#         """
-#         CREATE TABLE IF NOT EXISTS Avengers (
-#             URL TEXT, 
-#             Name_Alias TEXT, 
-#             Appearances INTEGER, 
-#             Current TEXT, 
-#             Gender TEXT, 
-#             Probationary_Introl TEXT, 
-#             Full_Reserve_Avengers_Intro TEXT, 
-#             Year INTEGER, 
-#             Years_since_joining INTEGER, 
-#             Honorary TEXT, 
-#             Death1 TEXT, 
-#             Return1 TEXT, 
-#             Death2 TEXT, 
-#             Return2 TEXT, 
-#             Death3 TEXT, 
-#             Return3 TEXT, 
-#             Death4 TEXT, 
-#             Return4 TEXT, 
-#             Death5 TEXT, 
-#             Notes TEXT
-#         )
-#         """
-#     )
-
-#     # Insert sample data
-#     entry_data = (
-#         'http://example.com', 'New Avenger', 100, 'YES', 'MALE', 'Intro Test', 
-#         'Full Member', 2022, 1, 'NO', 'NO', 'NO', 'NO', 'NO', 'NO', 'NO', 'NO', 
-#         'NO', 'NO', 'Test Notes'
-#     )
-#     create_entry(db_name, "Avengers", entry_data)
-
-#     conn.commit()
-#     conn.close()
-
-# def test_query():
-#     """Test the query function"""
-#     db_name = "test_avengers.db"
-#     table_name = "Avengers"
-
-#     # Setup the test database
-#     if not os.path.exists(db_name):
-#         setup_test_db()
-
-#     # Test the query function
-#     result = query(database=db_name, table=table_name)
-    
-#     # Assertions
-#     assert result is not None
-#     assert len(result) == 5
-
-# if __name__ == "__main__":
-#     # Run the test
-#     test_query()
-#     print("Test completed successfully.")
