@@ -6,7 +6,7 @@ from mylib.query import query_data
 
 def main():
     # Step 1: Extract data
-    #raw_data = extract_data()
+    raw_data = extract_data()
     print("Data extraction completed.")
 
     # Step 2: Transform data
