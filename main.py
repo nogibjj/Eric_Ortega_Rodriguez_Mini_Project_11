@@ -1,12 +1,12 @@
 # main.py
 from mylib.extract import extract_data
 from mylib.transform import transform_data
-from mylib.load import load_data
+from mylib.load import extract_data
 from mylib.query import query_data
 
 def main():
     # Step 1: Extract data
-    raw_data = extract_data()
+    #raw_data = extract_data()
     print("Data extraction completed.")
 
     # Step 2: Transform data
@@ -14,7 +14,7 @@ def main():
     print("Data transformation completed.")
 
     # Step 3: Load data
-    load_data(transformed_data)
+    extract_data(transformed_data)
     print("Data loading completed.")
 
     # Step 4: Query data
